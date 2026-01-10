@@ -227,6 +227,8 @@
 
         .btn-submit { background: var(--success-color); color: white; }
         .btn-reset { background: var(--accent-color); color: white; }
+        .btn-secondary { background: #95a5a6; color: white; }
+        .btn-primary { background: var(--secondary-color); color: white; }
 
         .score-board {
             position: fixed;
@@ -241,6 +243,13 @@
             z-index: 2000;
             display: none;
             min-width: 300px;
+        }
+        
+        .score-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
         }
 
         .overlay {
@@ -299,7 +308,7 @@
 
     <div class="actions" id="actionPanel" style="display: none;">
         <button class="btn btn-submit" onclick="submitQuiz()">Nộp Bài</button>
-        <button class="btn btn-reset" onclick="resetQuiz()">Làm Lại</button>
+        <button class="btn btn-reset" onclick="resetQuiz()">Làm Lại Đề Này</button>
     </div>
 
     <!-- Kết quả -->
@@ -308,7 +317,10 @@
         <h2 style="color: var(--primary-color);">Kết Quả</h2>
         <div style="font-size: 3rem; color: var(--success-color); margin: 20px 0;" id="scoreText">0/50</div>
         <p id="scoreMessage">Cố gắng hơn nhé!</p>
-        <button class="btn btn-secondary" onclick="closeScore()" style="background: #95a5a6; color: white;">Xem Chi Tiết</button>
+        <div class="score-actions">
+            <button class="btn btn-secondary" onclick="closeScoreAndReview()">Xem Chi Tiết</button>
+            <button class="btn btn-primary" onclick="backToMenu()">Chọn Đề Khác</button>
+        </div>
     </div>
 
     <script>
@@ -577,9 +589,22 @@
             document.querySelector('.btn-submit').style.display = 'none';
         }
 
-        function closeScore() {
+        function closeScoreAndReview() {
             document.getElementById('overlay').style.display = 'none';
             document.getElementById('scoreBoard').style.display = 'none';
+            window.scrollTo(0, 0);
+        }
+
+        function backToMenu() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('scoreBoard').style.display = 'none';
+            document.getElementById('actionPanel').style.display = 'none';
+            document.querySelector('.intro-card').style.display = 'block';
+            document.getElementById('mainContent').innerHTML = document.querySelector('.intro-card').outerHTML; // Reset content
+            
+            // Reset active button
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            
             window.scrollTo(0, 0);
         }
 
