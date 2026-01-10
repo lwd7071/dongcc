@@ -78,6 +78,7 @@
             max-width: 1000px;
             margin: 2rem auto;
             padding: 0 20px;
+            padding-bottom: 80px; /* Space for fixed footer */
         }
 
         .intro-card {
@@ -86,14 +87,6 @@
             border-radius: var(--border-radius);
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             text-align: center;
-        }
-
-        .quiz-container {
-            display: none;
-        }
-
-        .quiz-container.active {
-            display: block;
         }
 
         /* Question Styles */
@@ -130,14 +123,8 @@
             border-radius: 4px;
             font-size: 0.9em;
             height: fit-content;
-        }
-
-        .q-text code {
-            background: #f1f2f6;
-            padding: 2px 5px;
-            border-radius: 4px;
-            color: #c0392b;
-            font-family: 'Consolas', monospace;
+            min-width: 50px;
+            text-align: center;
         }
 
         .q-code-block {
@@ -160,7 +147,7 @@
 
         .option-label {
             display: flex;
-            align-items: flex-start; /* Canh lề trên cho nội dung dài */
+            align-items: flex-start;
             padding: 10px;
             border: 2px solid #e0e0e0;
             border-radius: 6px;
@@ -281,6 +268,7 @@
     </header>
 
     <main id="mainContent">
+        <!-- Nội dung sẽ được lưu và khôi phục bằng JS -->
         <div class="intro-card">
             <h2>Chào mừng bạn đến với hệ thống kiểm tra Python</h2>
             <p><strong>Cấu trúc đề thi (50 câu - 60 phút):</strong></p>
@@ -324,9 +312,10 @@
     </div>
 
     <script>
-        // DỮ LIỆU CÂU HỎI (5 ĐỀ)
-        // Cấu trúc: [Type (0:LTCB, 1:LTPKG, 2:Out, 3:Mat, 4:Fill, 5:Err), Question, Code(null if none), [Options], CorrectIndex, Explanation]
-        
+        // Lưu trữ nội dung trang chủ để khôi phục khi quay lại
+        let homeContentHTML = "";
+
+        // DỮ LIỆU CÂU HỎI
         const questionTypes = {
             0: "I. LÝ THUYẾT - KHÁI NIỆM CƠ BẢN",
             1: "I. LÝ THUYẾT - PACKAGES (NUMPY, PANDAS, MATPLOTLIB)",
@@ -336,14 +325,9 @@
             5: "II. THỰC HÀNH - TÌM LỖI SAI"
         };
 
-        // --- HÀM TẠO DỮ LIỆU GIẢ LẬP (Mô phỏng 5 đề từ file upload) ---
-        // Do giới hạn ký tự, tôi sẽ tạo mẫu Đề 1 đầy đủ và các đề khác biến thể
-        
         const generateTest = (seed) => {
             const test = [];
-            
             // --- PHẦN 1: LÝ THUYẾT (26 câu) ---
-            // 20 câu cơ bản
             const basicConcepts = [
                 [0, "Thuật toán là gì?", null, ["Dãy thao tác xác định, hữu hạn để giải quyết vấn đề", "Một chương trình máy tính", "Phần cứng xử lý", "Ngôn ngữ lập trình"], 0, "Thuật toán cần tính xác định, dừng và đúng đắn."],
                 [0, "Kết quả của `15 // 4`?", null, ["3.75", "3", "4", "3.0"], 1, "// là chia lấy nguyên."],
@@ -366,11 +350,10 @@
                 [0, "Khối `finally` trong try-except chạy khi nào?", null, ["Chỉ khi có lỗi", "Chỉ khi không lỗi", "Luôn chạy", "Khi user dừng"], 2, "Finally luôn chạy để dọn dẹp resource."],
                 [0, "Để chuyển chuỗi '123' thành số nguyên?", null, ["str()", "float()", "int()", "num()"], 2, "Hàm int()."]
             ];
-            // Trộn và lấy biến thể cho các đề khác nhau
+            // Biến đổi thứ tự một chút cho mỗi đề
             const basicShuffled = [...basicConcepts].sort(() => 0.5 - Math.random()); 
             basicShuffled.forEach(q => test.push(q));
 
-            // 6 câu Packages
             test.push([1, "Thư viện Numpy chủ yếu dùng để?", null, ["Vẽ biểu đồ", "Xử lý mảng/ma trận hiệu năng cao", "Làm web", "Quản lý file"], 1, "Numpy chuyên về tính toán số học trên mảng."]);
             test.push([1, "Cấu trúc dữ liệu bảng 2 chiều trong Pandas?", null, ["Series", "DataFrame", "Panel", "Table"], 1, "DataFrame là bảng dòng/cột."]);
             test.push([1, "Hàm `plt.plot()` trong Matplotlib vẽ biểu đồ gì?", null, ["Cột", "Tròn", "Đường (Line)", "Phân tán"], 2, "Plot mặc định vẽ đường."]);
@@ -379,7 +362,6 @@
             test.push([1, "Thuộc tính `.shape` của Numpy array trả về?", null, ["Tổng số phần tử", "Kích thước (dòng, cột)", "Kiểu dữ liệu", "Số chiều"], 1, "Trả về tuple kích thước."]);
 
             // --- PHẦN 2: THỰC HÀNH (24 câu) ---
-            // 10 Output
             test.push([2, "Kết quả in ra?", "x = 10\nif x > 5:\n    print('A')\nelif x > 8:\n    print('B')\nelse:\n    print('C')", ["A", "B", "C", "A và B"], 0, "Chỉ nhánh if đầu tiên đúng được thực thi."]);
             test.push([2, "Kết quả?", "for i in range(1, 4):\n    print(i, end='')", ["1234", "123", "0123", "012"], 1, "range(1,4) chạy 1, 2, 3."]);
             test.push([2, "Kết quả?", "a = [1, 2, 3]\nb = a\na[0] = 99\nprint(b[0])", ["1", "99", "Lỗi", "None"], 1, "List là tham chiếu, b trỏ cùng nơi với a."]);
@@ -391,11 +373,9 @@
             test.push([2, "Kết quả?", "try:\n    print(1/0)\nexcept:\n    print('Err')\nfinally:\n    print('Done')", ["Err", "Done", "Err\nDone", "Crash"], 2, "In Err rồi chạy finally in Done."]);
             test.push([2, "Output?", "d = {'a': 1}\nprint(d.get('b', 0))", ["None", "Lỗi KeyError", "0", "1"], 2, "Hàm get trả về default (0) nếu key không có."]);
 
-            // 2 Matplotlib (Mô tả)
             test.push([3, "Đoạn code `plt.bar(x, y)` sẽ vẽ ra hình ảnh nào?", null, ["Các đường gấp khúc nối nhau", "Các cột hình chữ nhật đứng", "Hình tròn chia tỉ lệ", "Các điểm chấm phân tán"], 1, "Bar chart là biểu đồ cột."]);
             test.push([3, "Để thêm tiêu đề cho biểu đồ như hình bên (giả lập), ta dùng lệnh gì?", null, ["plt.header()", "plt.name()", "plt.title()", "plt.top()"], 2, "plt.title('...') đặt tiêu đề."]);
 
-            // 6 Fill code
             test.push([4, "Điền vào chỗ trống để định nghĩa hàm:", "___ my_function():\n    print('Hi')", ["function", "def", "class", "void"], 1, "Từ khóa def."]);
             test.push([4, "Điền để thêm phần tử vào list:", "my_list = [1, 2]\nmy_list.___(3)", ["add", "push", "append", "insert"], 2, "List dùng append."]);
             test.push([4, "Điền để kế thừa lớp Cha:", "class Con(___):", ["Cha", "extends Cha", "implements Cha", "super Cha"], 0, "Cú pháp class Con(Cha)."]);
@@ -403,7 +383,6 @@
             test.push([4, "Điền để import numpy với tên tắt np:", "import numpy ___ np", ["is", "as", "to", "in"], 1, "import ... as ..."]);
             test.push([4, "Điền để kiểm tra key trong dict:", "if key ___ my_dict:", ["exist", "has", "in", "of"], 2, "Toán tử in."]);
 
-            // 6 Debug (Tìm lỗi)
             test.push([5, "Tìm dòng gây lỗi cú pháp:", "1: x = 10\n2: if x = 10:\n3:    print(x)", ["Dòng 1", "Dòng 2", "Dòng 3", "Không có lỗi"], 1, "So sánh phải dùng ==, = là gán."]);
             test.push([5, "Lỗi gì xảy ra ở đây?", "print(int('12.5'))", ["SyntaxError", "TypeError", "ValueError", "NameError"], 2, "Không thể ép chuỗi thập phân trực tiếp sang int."]);
             test.push([5, "Tìm lỗi logic (Code chạy nhưng sai ý nghĩa tính trung bình):", "avg = 2 + 3 / 2", ["Thiếu dấu ngoặc (2+3)/2", "Chia cho 0", "Sai kiểu dữ liệu", "Không có lỗi"], 0, "Thứ tự ưu tiên: chia trước cộng sau."]);
@@ -414,7 +393,6 @@
             return test;
         };
 
-        // Tạo 5 đề (biến thiên nhẹ bằng cách sort random phần lý thuyết)
         const quizData = {
             "de1": generateTest(1),
             "de2": generateTest(2),
@@ -423,41 +401,42 @@
             "de5": generateTest(5)
         };
 
-        // --- APP LOGIC ---
         let currentQuiz = null;
         let userAnswers = {};
         let timerInterval;
-        let timeLeft = 3600; // 60 phút
+        let timeLeft = 3600;
 
-        // Khởi tạo Tabs
-        const navTabs = document.getElementById('navTabs');
-        Object.keys(quizData).forEach((key, index) => {
-            const btn = document.createElement('button');
-            btn.className = `nav-btn ${index === 0 ? 'active' : ''}`;
-            btn.innerText = `Đề Số ${index + 1}`;
-            btn.onclick = () => loadQuiz(key, btn);
-            navTabs.appendChild(btn);
+        // --- KHỞI TẠO ---
+        window.addEventListener('DOMContentLoaded', () => {
+            // Lưu nội dung intro
+            homeContentHTML = document.getElementById('mainContent').innerHTML;
+
+            const navTabs = document.getElementById('navTabs');
+            Object.keys(quizData).forEach((key, index) => {
+                const btn = document.createElement('button');
+                btn.className = `nav-btn`;
+                btn.innerText = `Đề Số ${index + 1}`;
+                btn.onclick = () => loadQuiz(key, btn);
+                navTabs.appendChild(btn);
+            });
         });
 
         function loadQuiz(quizKey, btnElement) {
-            // Reset UI
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             if(btnElement) btnElement.classList.add('active');
             
-            document.querySelector('.intro-card').style.display = 'none';
+            // Xóa intro (nếu có) và hiện action bar
             document.getElementById('actionPanel').style.display = 'flex';
             const main = document.getElementById('mainContent');
             main.innerHTML = '';
             
             currentQuiz = quizData[quizKey];
-            userAnswers = {}; // Reset câu trả lời
+            userAnswers = {};
             window.scrollTo(0, 0);
 
-            // Render câu hỏi theo nhóm
             let currentType = -1;
             
             currentQuiz.forEach((q, index) => {
-                // Thêm header phân loại nếu đổi nhóm
                 if (q[0] !== currentType) {
                     currentType = q[0];
                     const header = document.createElement('div');
@@ -466,15 +445,12 @@
                     main.appendChild(header);
                 }
 
-                // Card câu hỏi
                 const card = document.createElement('div');
                 card.className = 'question-card';
                 card.id = `q-${index}`;
 
-                // Code block nếu có
                 const codeHtml = q[2] ? `<div class="q-code-block">${q[2]}</div>` : '';
 
-                // Options
                 let optionsHtml = '<div class="options-grid">';
                 q[3].forEach((opt, optIndex) => {
                     optionsHtml += `
@@ -486,7 +462,6 @@
                 });
                 optionsHtml += '</div>';
 
-                // Explanation block
                 const explainHtml = `<div class="explanation" id="explain-${index}">👉 <strong>Giải thích:</strong> ${q[5]}</div>`;
 
                 card.innerHTML = `
@@ -501,13 +476,11 @@
                 main.appendChild(card);
             });
 
-            // Restart Timer nếu đổi đề (hoặc giữ nguyên tùy logic, ở đây reset cho đề mới)
             startTimer();
         }
 
         function selectAnswer(qIndex, optIndex) {
             userAnswers[qIndex] = optIndex;
-            // Highlight visual
             const inputs = document.getElementsByName(`q${qIndex}`);
             inputs.forEach((inp, idx) => {
                 const label = inp.parentElement;
@@ -524,14 +497,14 @@
 
         function startTimer() {
             clearInterval(timerInterval);
-            timeLeft = 3600; // 60 phút
+            timeLeft = 3600;
             updateTimerDisplay();
             timerInterval = setInterval(() => {
                 timeLeft--;
                 updateTimerDisplay();
                 if (timeLeft <= 0) {
                     clearInterval(timerInterval);
-                    submitQuiz(true); // Auto submit
+                    submitQuiz(true);
                 }
             }, 1000);
         }
@@ -541,7 +514,7 @@
             const s = (timeLeft % 60).toString().padStart(2, '0');
             const display = document.getElementById('timerDisplay');
             display.innerText = `${m}:${s}`;
-            if (timeLeft < 300) display.style.color = 'red'; // Cảnh báo 5 phút cuối
+            if (timeLeft < 300) display.style.color = 'red';
             else display.style.color = 'var(--accent-color)';
         }
 
@@ -558,10 +531,8 @@
                 const labels = card.querySelectorAll('.option-label');
                 const explain = document.getElementById(`explain-${index}`);
 
-                // Hiện giải thích
                 explain.style.display = 'block';
 
-                // Tô màu đáp án
                 if (userAns !== undefined) {
                     if (userAns === correctAns) {
                         score++;
@@ -571,21 +542,20 @@
                         labels[correctAns].classList.add('correct-answer');
                     }
                 } else {
-                    // Chưa chọn
                     labels[correctAns].classList.add('correct-answer');
                 }
                 
-                // Disable inputs
                 card.querySelectorAll('input').forEach(i => i.disabled = true);
+                card.querySelectorAll('.option-label').forEach(l => l.style.cursor = 'default');
+                // Xóa onclick attribute
+                card.querySelectorAll('.option-label').forEach(l => l.onclick = null);
             });
 
-            // Show Score
             document.getElementById('scoreText').innerText = `${score}/50`;
             document.getElementById('scoreMessage').innerText = score >= 40 ? "Xuất sắc! 🎉" : (score >= 25 ? "Đạt yêu cầu 👍" : "Cần ôn tập thêm 📚");
             document.getElementById('overlay').style.display = 'block';
             document.getElementById('scoreBoard').style.display = 'block';
             
-            // Ẩn nút nộp
             document.querySelector('.btn-submit').style.display = 'none';
         }
 
@@ -596,14 +566,22 @@
         }
 
         function backToMenu() {
+            // Ẩn các popup
             document.getElementById('overlay').style.display = 'none';
             document.getElementById('scoreBoard').style.display = 'none';
             document.getElementById('actionPanel').style.display = 'none';
-            document.querySelector('.intro-card').style.display = 'block';
-            document.getElementById('mainContent').innerHTML = document.querySelector('.intro-card').outerHTML; // Reset content
+            
+            // Khôi phục trang chủ từ biến đã lưu
+            document.getElementById('mainContent').innerHTML = homeContentHTML;
             
             // Reset active button
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            
+            // Hiện lại nút nộp cho lần sau
+            document.querySelector('.btn-submit').style.display = 'inline-block';
+            
+            // Reset timer text
+            document.getElementById('timerDisplay').innerText = "60:00";
             
             window.scrollTo(0, 0);
         }
@@ -611,13 +589,22 @@
         function resetQuiz() {
             if(confirm("Làm lại sẽ xóa hết kết quả hiện tại?")) {
                 const activeBtn = document.querySelector('.nav-btn.active');
-                const key = Object.keys(quizData).find(k => quizData[k] === currentQuiz);
-                loadQuiz(key, activeBtn);
-                document.querySelector('.btn-submit').style.display = 'inline-block';
+                if (!activeBtn) return;
+                
+                // Tìm key của quiz đang active dựa trên text của nút
+                // Cách đơn giản hơn: duyệt qua các nút để tìm nút active và lấy index
+                let quizIndex = -1;
+                document.querySelectorAll('.nav-btn').forEach((btn, idx) => {
+                    if (btn.classList.contains('active')) quizIndex = idx;
+                });
+                
+                if (quizIndex !== -1) {
+                    const key = `de${quizIndex + 1}`;
+                    loadQuiz(key, activeBtn);
+                    document.querySelector('.btn-submit').style.display = 'inline-block';
+                }
             }
         }
-
-        // Auto load Intro (Không load đề ngay)
     </script>
 </body>
 </html>
